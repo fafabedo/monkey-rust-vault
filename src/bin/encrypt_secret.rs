@@ -5,7 +5,7 @@ fn main() {
     // Inline the crypto logic so this binary has zero extra deps.
     use aes_gcm::{
         aead::{Aead, AeadCore, KeyInit, OsRng},
-        Aes256Gcm, Key, Nonce,
+        Aes256Gcm, Key,
     };
     use base64::{engine::general_purpose::STANDARD, Engine};
 

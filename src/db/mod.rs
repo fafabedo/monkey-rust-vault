@@ -144,6 +144,7 @@ struct PendingFileBody<'a> {
     space_id:      Option<Uuid>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn insert_file_pending(
     supabase:      &SupabaseClient,
     bucket:        &BucketRow,
