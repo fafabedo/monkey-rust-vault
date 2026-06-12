@@ -1,7 +1,10 @@
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, sqlx::FromRow)]
+/// Flat view of a bucket row, assembled from the Supabase PostgREST response.
+/// Used by all StorageDriver impls.
+#[derive(Debug)]
+#[allow(dead_code)]
 pub struct BucketRow {
     pub id:                       Uuid,
     pub slug:                     String,
@@ -11,10 +14,9 @@ pub struct BucketRow {
     pub local_sub_path:           Option<String>,
     pub instance_id:              Option<Uuid>,
     pub space_id:                 Option<Uuid>,
-    // joined from storage_providers
+    // from storage_providers
     pub provider_type:            String,
-    // joined from storage_provider_credentials
-    pub aws_profile:              Option<String>,
+    // from storage_provider_credentials
     pub aws_access_key_enc:       Option<String>,
     pub aws_secret_key_enc:       Option<String>,
     pub aws_region:               Option<String>,

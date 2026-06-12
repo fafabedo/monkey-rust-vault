@@ -7,6 +7,7 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 use crate::error::{VaultError, VaultResult};
 
 /// Encrypt plaintext with AES-256-GCM. Returns base64(nonce || ciphertext).
+#[allow(dead_code)]
 pub fn encrypt(plaintext: &str, key_hex: &str) -> VaultResult<String> {
     let key_bytes = hex::decode(key_hex)
         .map_err(|e| VaultError::Crypto(format!("Invalid key hex: {e}")))?;

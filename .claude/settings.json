@@ -7,7 +7,10 @@
       "Bash(cargo search *)",
       "Bash(find ~/.cargo/registry/src -path \"*/aws-runtime-1.7.4/src/auth/sigv4.rs\" 2>/dev/null)",
       "Read(//Users/e043280/.cargo/registry/src/**)",
-      "Bash(cargo test *)"
+      "Bash(cargo test *)",
+      "Bash(cargo build *)",
+      "Bash(aws s3 *)",
+      "Bash(aws s3api *)"
     ],
     "additionalDirectories": [
       "/Users/e043280/Project/bedoyatech/monkey-library/monkey-library-viewer-app/supabase",

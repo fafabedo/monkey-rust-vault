@@ -31,24 +31,16 @@ pub async fn handle_upload(
         match field.name() {
             Some("uri") => {
                 uri = Some(
-                    field
-                        .text()
-                        .await
+                    field.text().await
                         .map_err(|e| VaultError::UploadFailed(e.to_string()))?,
                 );
             }
             Some("instance_id") => {
-                instance_id = field
-                    .text()
-                    .await
-                    .ok()
+                instance_id = field.text().await.ok()
                     .and_then(|s| Uuid::parse_str(&s).ok());
             }
             Some("space_id") => {
-                space_id = field
-                    .text()
-                    .await
-                    .ok()
+                space_id = field.text().await.ok()
                     .and_then(|s| Uuid::parse_str(&s).ok());
             }
             Some("file") => {
@@ -56,9 +48,7 @@ pub async fn handle_upload(
                     mime_type = ct.to_string();
                 }
                 file_data = Some(
-                    field
-                        .bytes()
-                        .await
+                    field.bytes().await
                         .map_err(|e| VaultError::UploadFailed(e.to_string()))?,
                 );
             }
@@ -66,12 +56,11 @@ pub async fn handle_upload(
         }
     }
 
-    let uri = uri.ok_or_else(|| VaultError::InvalidUri("Missing `uri` field".into()))?;
-    let file_data =
-        file_data.ok_or_else(|| VaultError::UploadFailed("Missing `file` field".into()))?;
+    let uri       = uri.ok_or_else(|| VaultError::InvalidUri("Missing `uri` field".into()))?;
+    let file_data = file_data.ok_or_else(|| VaultError::UploadFailed("Missing `file` field".into()))?;
 
     let output = upload_file(
-        &state.db,
+        &state.supabase,
         &state.config,
         UploadParams {
             uri,

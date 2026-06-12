@@ -1,0 +1,22 @@
+# Build output
+/target/
+
+# Credentials and secrets
+.env
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Vendor directory (only if using cargo vendor)
+vendor/
+
+# IDE and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude Code
+.claude/

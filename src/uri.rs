@@ -9,6 +9,7 @@ pub enum UriScheme {
 }
 
 impl UriScheme {
+    #[allow(dead_code)]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::S3          => "s3",
@@ -20,6 +21,7 @@ impl UriScheme {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct StorageUri {
     pub scheme:        UriScheme,
     pub bucket_slug:   String,
@@ -55,6 +57,7 @@ impl StorageUri {
         Ok(StorageUri { scheme, bucket_slug, relative_path, file_name })
     }
 
+    #[allow(dead_code)]
     pub fn to_uri_string(&self) -> String {
         format!("{}://{}/{}", self.scheme.as_str(), self.bucket_slug, self.relative_path)
     }

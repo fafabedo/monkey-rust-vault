@@ -1,24 +1,20 @@
 [package]
 name = "monkey-vault"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 # Web
-axum = { version = "0.7", features = ["multipart"] }
+axum = { version = "0.8", features = ["multipart"] }
 tokio = { version = "1", features = ["full"] }
-tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "trace"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
 
-# DB
-sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-native-tls", "uuid", "chrono"] }
-
-# AWS
-aws-config = { version = "1.8", features = ["behavior-version-latest"] }
-aws-sdk-s3 = "1.80"
-
-# HTTP client (Dropbox, Google Drive)
+# Supabase (PostgREST via service key)
 reqwest = { version = "0.12", features = ["json", "multipart", "stream"] }
+
+# Storage
+object_store = { version = "0.13", features = ["aws"] }
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
@@ -37,15 +33,10 @@ jsonwebtoken = "9"
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 anyhow = "1"
-thiserror = "1"
+thiserror = "2"
 async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenvy = "0.15"
 mime_guess = "2"
 bytes = "1"
-
-[patch.crates-io]
-# aws-runtime 1.7.4 has a Rust 1.96 type-inference regression (E0282 in sigv4.rs).
-# This vendored copy carries the one-line fix; remove once upstream publishes a patch.
-aws-runtime = { path = "vendor/aws-runtime" }

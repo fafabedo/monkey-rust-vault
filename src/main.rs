@@ -6,20 +6,21 @@ mod models;
 mod providers;
 mod routes;
 mod service;
+mod supabase;
 mod uri;
 
 use std::sync::Arc;
 
 use axum::{routing::post, Router};
-use sqlx::postgres::PgPoolOptions;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use config::Config;
+use supabase::SupabaseClient;
 
 pub struct AppState {
-    pub db:     sqlx::PgPool,
-    pub config: Config,
+    pub supabase: SupabaseClient,
+    pub config:   Config,
 }
 
 #[tokio::main]
@@ -35,16 +36,10 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let config = Config::from_env()?;
-    let port   = config.port;
+    let bind   = config.bind_addr.clone();
 
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&config.database_url)
-        .await?;
-
-    sqlx::migrate!("./migrations").run(&pool).await?;
-
-    let state = Arc::new(AppState { db: pool, config });
+    let supabase = SupabaseClient::new(&config.supabase_url, &config.supabase_service_key);
+    let state    = Arc::new(AppState { supabase, config });
 
     let app = Router::new()
         .route("/upload", post(routes::upload::handle_upload))
@@ -53,9 +48,8 @@ async fn main() -> anyhow::Result<()> {
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive());
 
-    let addr = format!("0.0.0.0:{port}");
-    tracing::info!("monkey-vault listening on {addr}");
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    tracing::info!("monkey-vault listening on {bind}");
+    let listener = tokio::net::TcpListener::bind(&bind).await?;
     axum::serve(listener, app).await?;
     Ok(())
 }

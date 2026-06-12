@@ -1,7 +1,6 @@
 use async_trait::async_trait;
-use aws_config::{BehaviorVersion, Region};
-use aws_sdk_s3::{primitives::ByteStream, Client};
 use bytes::Bytes;
+use object_store::{aws::AmazonS3Builder, path::Path, ObjectStore, ObjectStoreExt};
 use sha2::{Digest, Sha256};
 
 use crate::{
@@ -25,34 +24,36 @@ impl S3Driver {
         }
     }
 
-    async fn client(&self, bucket: &BucketRow) -> VaultResult<Client> {
+    fn build_store(&self, bucket: &BucketRow) -> VaultResult<impl ObjectStore> {
+        let s3_bucket = bucket
+            .s3_bucket_name
+            .as_deref()
+            .ok_or_else(|| VaultError::Provider("Missing s3_bucket_name".into()))?;
+
         let region = bucket
             .aws_region
             .as_deref()
-            .unwrap_or(&self.default_region)
-            .to_string();
+            .unwrap_or(&self.default_region);
 
-        let cfg = if let (Some(key_enc), Some(secret_enc)) =
+        let mut builder = AmazonS3Builder::new()
+            .with_bucket_name(s3_bucket)
+            .with_region(region)
+            .with_virtual_hosted_style_request(true);
+
+        if let (Some(key_enc), Some(secret_enc)) =
             (&bucket.aws_access_key_enc, &bucket.aws_secret_key_enc)
         {
             let access_key = crypto::decrypt(key_enc, &self.encryption_key)?;
             let secret_key = crypto::decrypt(secret_enc, &self.encryption_key)?;
-            aws_config::defaults(BehaviorVersion::latest())
-                .region(Region::new(region))
-                .credentials_provider(aws_sdk_s3::config::Credentials::new(
-                    access_key, secret_key, None, None, "vault",
-                ))
-                .load()
-                .await
-        } else {
-            aws_config::defaults(BehaviorVersion::latest())
-                .region(Region::new(region))
-                .profile_name(bucket.aws_profile.as_deref().unwrap_or("default"))
-                .load()
-                .await
-        };
+            builder = builder
+                .with_access_key_id(access_key)
+                .with_secret_access_key(secret_key);
+        }
+        // No explicit credentials → object_store falls back to env vars / instance profile.
 
-        Ok(Client::new(&cfg))
+        builder
+            .build()
+            .map_err(|e| VaultError::Provider(e.to_string()))
     }
 }
 
@@ -63,50 +64,36 @@ impl StorageDriver for S3Driver {
         bucket:        &BucketRow,
         relative_path: &str,
         data:          Bytes,
-        mime_type:     &str,
+        _mime_type:    &str,
     ) -> VaultResult<UploadResult> {
-        let client = self.client(bucket).await?;
-        let s3_bucket = bucket
-            .s3_bucket_name
-            .as_deref()
-            .ok_or_else(|| VaultError::Provider("Missing s3_bucket_name".into()))?;
+        let store = self.build_store(bucket)?;
+        let path  = Path::from(relative_path);
 
         let mut hasher = Sha256::new();
         hasher.update(&data);
         let checksum = hex::encode(hasher.finalize());
         let size = data.len() as u64;
 
-        client
-            .put_object()
-            .bucket(s3_bucket)
-            .key(relative_path)
-            .body(ByteStream::from(data))
-            .content_type(mime_type)
-            .send()
+        let put_result = store
+            .put(&path, data.into())
             .await
             .map_err(|e| VaultError::Provider(e.to_string()))?;
 
+        let provider_ref = put_result
+            .e_tag
+            .unwrap_or_else(|| relative_path.to_string());
+
         Ok(UploadResult {
             uri:          format!("s3://{}/{}", bucket.slug, relative_path),
-            provider_ref: relative_path.to_string(),
+            provider_ref,
             checksum:     Some(checksum),
             file_size:    size,
         })
     }
 
     async fn verify(&self, bucket: &BucketRow, relative_path: &str) -> VaultResult<bool> {
-        let client = self.client(bucket).await?;
-        let s3_bucket = bucket
-            .s3_bucket_name
-            .as_deref()
-            .ok_or_else(|| VaultError::Provider("Missing s3_bucket_name".into()))?;
-
-        Ok(client
-            .head_object()
-            .bucket(s3_bucket)
-            .key(relative_path)
-            .send()
-            .await
-            .is_ok())
+        let store = self.build_store(bucket)?;
+        let path  = Path::from(relative_path);
+        Ok(store.head(&path).await.is_ok())
     }
 }

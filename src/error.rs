@@ -13,13 +13,15 @@ pub enum VaultError {
     #[error("Verification failed")]
     VerificationFailed,
     #[error("Database error: {0}")]
-    Database(#[from] sqlx::Error),
+    Database(String),
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     #[error("Provider error: {0}")]
     Provider(String),
     #[error("Crypto error: {0}")]
     Crypto(String),
+    #[error("HTTP error: {0}")]
+    Http(#[from] reqwest::Error),
 }
 
 impl IntoResponse for VaultError {
