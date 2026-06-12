@@ -79,7 +79,7 @@ jobs:
 
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
             CONTAINER_NAME="monkey-vault"
-            ENV_FILE="/etc/monkey-vault/.env"
+            ENV_FILE="/var/www/monkey-vault/.env"
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
