@@ -48,13 +48,26 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -s << 'EOF'
             set -e
-            export XDG_RUNTIME_DIR=/run/user/$(id -u)
+
+            # Stop running instance if any
+            pkill -f monkey-vault || true
+            sleep 1
+
+            # Install new binary
             mv /tmp/monkey-vault ~/bin/monkey-vault
             chmod +x ~/bin/monkey-vault
-            systemctl --user daemon-reload
-            systemctl --user restart monkey-vault || {
-              systemctl --user status monkey-vault --no-pager
+
+            # Start in background, append logs
+            nohup ~/bin/monkey-vault >> ~/monkey-vault.log 2>&1 &
+
+            # Give it a moment to start or crash
+            sleep 3
+
+            if pgrep -f monkey-vault > /dev/null; then
+              echo "Deployment successful (PID $(pgrep -f monkey-vault))"
+            else
+              echo "Service failed to start — last log lines:"
+              tail -20 ~/monkey-vault.log
               exit 1
-            }
-            systemctl --user is-active --quiet monkey-vault && echo "Deployment successful"
+            fi
           EOF
