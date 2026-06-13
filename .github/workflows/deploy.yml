@@ -48,6 +48,7 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -s << 'EOF'
             set -e
+            export XDG_RUNTIME_DIR=/run/user/$(id -u)
             mv /tmp/monkey-vault ~/bin/monkey-vault
             chmod +x ~/bin/monkey-vault
             systemctl --user restart monkey-vault
