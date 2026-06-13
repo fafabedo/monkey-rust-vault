@@ -51,6 +51,10 @@ jobs:
             export XDG_RUNTIME_DIR=/run/user/$(id -u)
             mv /tmp/monkey-vault ~/bin/monkey-vault
             chmod +x ~/bin/monkey-vault
-            systemctl --user restart monkey-vault
+            systemctl --user daemon-reload
+            systemctl --user restart monkey-vault || {
+              systemctl --user status monkey-vault --no-pager
+              exit 1
+            }
             systemctl --user is-active --quiet monkey-vault && echo "Deployment successful"
           EOF
