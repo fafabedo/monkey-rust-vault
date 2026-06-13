@@ -34,8 +34,6 @@ jobs:
 
       - name: Build release binary
         run: cargo build --release --target x86_64-unknown-linux-musl
-        env:
-          OPENSSL_STATIC: "1"
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
