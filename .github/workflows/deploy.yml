@@ -48,8 +48,8 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -s << 'EOF'
             set -e
-            sudo mv /tmp/monkey-vault /usr/local/bin/monkey-vault
-            sudo chmod +x /usr/local/bin/monkey-vault
-            sudo systemctl restart monkey-vault
-            sudo systemctl is-active --quiet monkey-vault && echo "Deployment successful"
+            mv /tmp/monkey-vault ~/bin/monkey-vault
+            chmod +x ~/bin/monkey-vault
+            systemctl --user restart monkey-vault
+            systemctl --user is-active --quiet monkey-vault && echo "Deployment successful"
           EOF
