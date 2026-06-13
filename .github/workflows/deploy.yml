@@ -63,7 +63,8 @@ jobs:
             mv /tmp/monkey-vault ~/bin/monkey-vault
             chmod +x ~/bin/monkey-vault
 
-            # Start in background, append logs
+            # Start in background from env file directory so dotenvy finds .env
+            cd /var/www/monkey-vault
             nohup ~/bin/monkey-vault >> ~/monkey-vault.log 2>&1 &
 
             # Give it a moment to start or crash
