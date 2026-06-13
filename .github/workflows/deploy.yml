@@ -26,8 +26,16 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
+      - name: Install musl tools
+        run: sudo apt-get install -y musl-tools
+
+      - name: Add musl target
+        run: rustup target add x86_64-unknown-linux-musl
+
       - name: Build release binary
-        run: cargo build --release
+        run: cargo build --release --target x86_64-unknown-linux-musl
+        env:
+          OPENSSL_STATIC: "1"
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -42,7 +50,7 @@ jobs:
 
       - name: Copy binary to server
         run: |
-          scp target/release/monkey-vault ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/monkey-vault
+          scp target/x86_64-unknown-linux-musl/release/monkey-vault ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/monkey-vault
 
       - name: Deploy
         run: |
