@@ -66,6 +66,9 @@ jobs:
       - name: Add server to known hosts
         run: echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
+      - name: Verify SSH connectivity
+        run: ssh -o BatchMode=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} echo "SSH connection OK"
+
       - name: Deploy
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
