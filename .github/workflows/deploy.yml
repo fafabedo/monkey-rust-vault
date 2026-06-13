@@ -89,28 +89,29 @@ jobs:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ssh $SSH_USER@$SSH_HOST bash -l -s << ENDSSH
+          ssh $SSH_USER@$SSH_HOST bash -s << ENDSSH
             set -e
+            export PATH=\$PATH:/usr/bin:/usr/local/bin:/usr/local/sbin
 
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
             CONTAINER_NAME="monkey-vault"
             ENV_FILE="/var/www/monkey-vault/.env"
 
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            docker pull "\$IMAGE"
+            sudo docker pull "\$IMAGE"
 
-            docker stop "\$CONTAINER_NAME" 2>/dev/null || true
-            docker rm   "\$CONTAINER_NAME" 2>/dev/null || true
+            sudo docker stop "\$CONTAINER_NAME" 2>/dev/null || true
+            sudo docker rm   "\$CONTAINER_NAME" 2>/dev/null || true
 
-            docker run -d \
+            sudo docker run -d \
               --name "\$CONTAINER_NAME" \
               --restart unless-stopped \
               --env-file "\$ENV_FILE" \
               -p 4200:4200 \
               "\$IMAGE"
 
-            docker image prune -f
+            sudo docker image prune -f
 
             echo "Deployment successful: \$IMAGE"
           ENDSSH
