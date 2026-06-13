@@ -67,8 +67,19 @@ jobs:
         run: echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
       - name: Verify SSH connectivity
+        run: ssh -o BatchMode=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} echo "SSH connection OK"
+
+      - name: Install Docker if missing
         run: |
-          ssh -o BatchMode=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'SSH OK' && which docker || echo 'docker not in PATH' && ls /usr/bin/docker /usr/local/bin/docker 2>&1"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash -s << 'EOF'
+            if command -v docker &>/dev/null; then
+              echo "Docker already installed: $(docker --version)"
+              exit 0
+            fi
+            curl -fsSL https://get.docker.com | sh
+            sudo usermod -aG docker $USER
+            echo "Docker installed: $(docker --version)"
+          EOF
 
       - name: Deploy
         env:
