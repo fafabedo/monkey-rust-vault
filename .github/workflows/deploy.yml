@@ -77,7 +77,7 @@ jobs:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ssh $SSH_USER@$SSH_HOST bash -s << ENDSSH
+          ssh $SSH_USER@$SSH_HOST bash -l -s << ENDSSH
             set -e
 
             IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
