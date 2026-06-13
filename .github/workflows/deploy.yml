@@ -67,7 +67,8 @@ jobs:
         run: echo "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
       - name: Verify SSH connectivity
-        run: ssh -o BatchMode=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} echo "SSH connection OK"
+        run: |
+          ssh -o BatchMode=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo 'SSH OK' && which docker || echo 'docker not in PATH' && ls /usr/bin/docker /usr/local/bin/docker 2>&1"
 
       - name: Deploy
         env:
