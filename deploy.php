@@ -7,7 +7,7 @@ require 'recipe/common.php';
 set('application', 'monkey-vault');
 set('keep_releases', 3);
 
-set('repository', 'git@github.com:bedoyatech/monkey-rust-vault.git');
+set('repository', 'git@github.com:fafabedo/monkey-rust-vault.git');
 
 set('shared_files', ['.env']);
 set('shared_dirs', []);
@@ -19,14 +19,14 @@ host('vault.monkeylibrary.app')
   ->stage('prod')
   ->user('fabricio')
   ->identityFile('~/.ssh/id_ed25519')
-  ->forwardAgent(true)
+  ->forwardAgent(FALSE)
   ->set('deploy_path', '/home/fabricio/Apps/monkey-vault');
 
-host('vault.venux-channel.com')
+host('athens-temporary.venux-channel.com')
   ->stage('staging')
   ->user('fabricio')
   ->identityFile('~/.ssh/id_rsa')
-  ->forwardAgent(true)
+  ->forwardAgent(FALSE)
   ->set('deploy_path', '/home/fabricio/Apps/monkey-vault');
 
 // ─── Tasks ───────────────────────────────────────────────────────────────────
