@@ -179,18 +179,35 @@ cargo build --release --target x86_64-unknown-linux-musl
 ## Database schema
 
 ```
-storage_providers (1)
+public.processor (existing)
+    └── monkey_vault.storage_processor_mounts (many)  ← temp://, queue://, trash://
+    └── monkey_vault.storage_files.processor_id       ← local upload traceability
+
+monkey_vault.storage_providers (1)
     └── storage_provider_credentials (1)
     └── storage_buckets (many)
             └── storage_files (many)
 ```
 
-| Table | Purpose |
-|-------|---------|
-| `storage_providers` | Defines available provider types and their active status |
-| `storage_provider_credentials` | Encrypted credentials per provider |
-| `storage_buckets` | Bucket configurations mapped to a slug used in URIs |
-| `storage_files` | Upload history with status, checksum, and provider reference |
+| Schema | Table | Purpose |
+|--------|-------|---------|
+| `public` | `processor` | Existing processor registry — extended with `slug` column |
+| `monkey_vault` | `storage_providers` | Available cloud provider types and active status |
+| `monkey_vault` | `storage_provider_credentials` | AES-256-GCM encrypted credentials per provider |
+| `monkey_vault` | `storage_buckets` | Bucket configs mapped to a URI slug |
+| `monkey_vault` | `storage_files` | Upload history with status, checksum, provider ref, and optional `processor_id` |
+| `monkey_vault` | `storage_processor_mounts` | Maps named mount types (`temp`, `queue`, `trash`) to local paths per processor |
+
+### Processor mount URI resolution
+
+When monkey-vault receives `temp://imports/jan.csv`:
+
+1. Checks if the scheme (`temp`) is a registered mount type for `PROCESSOR_ID`
+2. Looks up `storage_processor_mounts` for that processor's `local_path`
+3. Writes to `{local_path}/imports/jan.csv` using the local filesystem driver
+4. Records the file in `storage_files` with `processor_id` set
+
+Files uploaded via processor mounts are physically isolated per machine. Other processors can query `storage_files` by `processor_id` to discover what files exist, but cannot read the bytes directly.
 
 ## Server Deployment (Ubuntu 24 + NGINX)
 

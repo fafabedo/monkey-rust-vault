@@ -33,7 +33,7 @@ host('athens-temporary.venux-channel.com')
 
 task('app:build', function () {
   cd('{{release_path}}');
-  run('sh install.sh', ['timeout' => null]);
+  run('bash install.sh', ['timeout' => null]);
 });
 
 task('app:restart', function () {
