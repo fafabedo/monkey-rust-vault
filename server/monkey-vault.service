@@ -1,0 +1,26 @@
+[Unit]
+Description=monkey-vault storage service
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=fabricio
+Group=fabricio
+# Points to Deployer's current symlink — updated automatically on each deploy
+WorkingDirectory=/home/fabricio/Apps/monkey-vault/current
+ExecStart=/home/fabricio/Apps/monkey-vault/current/target/release/monkey-vault
+EnvironmentFile=/home/fabricio/Apps/monkey-vault/shared/.env
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=monkey-vault
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

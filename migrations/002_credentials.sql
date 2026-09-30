@@ -1,6 +1,6 @@
-CREATE TABLE storage_provider_credentials (
+CREATE TABLE monkey_vault.storage_provider_credentials (
   id                          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  provider_id                 UUID NOT NULL REFERENCES storage_providers(id) ON DELETE CASCADE,
+  provider_id                 UUID NOT NULL REFERENCES monkey_vault.storage_providers(id) ON DELETE CASCADE,
   -- AWS S3
   aws_profile                 TEXT,
   aws_access_key_enc          TEXT,   -- AES-256-GCM encrypted, base64

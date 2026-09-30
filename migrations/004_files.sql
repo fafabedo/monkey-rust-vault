@@ -1,6 +1,6 @@
-CREATE TABLE storage_files (
+CREATE TABLE monkey_vault.storage_files (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  bucket_id        UUID NOT NULL REFERENCES storage_buckets(id),
+  bucket_id        UUID NOT NULL REFERENCES monkey_vault.storage_buckets(id),
   relative_path    TEXT NOT NULL,
   uri              TEXT NOT NULL,
   file_name        TEXT NOT NULL,
@@ -18,5 +18,5 @@ CREATE TABLE storage_files (
   UNIQUE(bucket_id, relative_path)
 );
 
-CREATE INDEX idx_storage_files_uri    ON storage_files(uri);
-CREATE INDEX idx_storage_files_bucket ON storage_files(bucket_id);
+CREATE INDEX idx_storage_files_uri    ON monkey_vault.storage_files(uri);
+CREATE INDEX idx_storage_files_bucket ON monkey_vault.storage_files(bucket_id);

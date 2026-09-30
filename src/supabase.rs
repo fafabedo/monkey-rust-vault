@@ -1,5 +1,7 @@
 use reqwest::{Client, RequestBuilder};
 
+const SCHEMA: &str = "monkey_vault";
+
 /// Thin wrapper around reqwest that attaches Supabase auth headers to every request.
 #[derive(Clone)]
 pub struct SupabaseClient {
@@ -22,6 +24,7 @@ impl SupabaseClient {
             .get(format!("{}/{}", self.rest_url, table))
             .header("apikey", &self.service_key)
             .header("Authorization", format!("Bearer {}", self.service_key))
+            .header("Accept-Profile", SCHEMA)
     }
 
     /// POST with `Prefer: return=representation` so the inserted row is returned.
@@ -31,6 +34,7 @@ impl SupabaseClient {
             .header("apikey", &self.service_key)
             .header("Authorization", format!("Bearer {}", self.service_key))
             .header("Content-Type", "application/json")
+            .header("Content-Profile", SCHEMA)
             .header("Prefer", "return=representation")
     }
 
@@ -41,6 +45,7 @@ impl SupabaseClient {
             .header("apikey", &self.service_key)
             .header("Authorization", format!("Bearer {}", self.service_key))
             .header("Content-Type", "application/json")
+            .header("Content-Profile", SCHEMA)
             .header("Prefer", "resolution=merge-duplicates,return=representation")
             .query(&[("on_conflict", on_conflict)])
     }
@@ -51,5 +56,6 @@ impl SupabaseClient {
             .header("apikey", &self.service_key)
             .header("Authorization", format!("Bearer {}", self.service_key))
             .header("Content-Type", "application/json")
+            .header("Content-Profile", SCHEMA)
     }
 }

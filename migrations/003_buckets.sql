@@ -1,8 +1,8 @@
-CREATE TABLE storage_buckets (
+CREATE TABLE monkey_vault.storage_buckets (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug              TEXT NOT NULL UNIQUE,   -- used in URI: "vx-bucket-01"
   display_name      TEXT NOT NULL,
-  provider_id       UUID NOT NULL REFERENCES storage_providers(id),
+  provider_id       UUID NOT NULL REFERENCES monkey_vault.storage_providers(id),
   s3_bucket_name    TEXT,
   dropbox_root_path TEXT,
   drive_folder_id   TEXT,
@@ -14,4 +14,4 @@ CREATE TABLE storage_buckets (
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_storage_buckets_slug ON storage_buckets(slug);
+CREATE INDEX idx_storage_buckets_slug ON monkey_vault.storage_buckets(slug);
