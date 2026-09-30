@@ -1,0 +1,3 @@
+[submodule "monkey-documentation"]
+	path = monkey-documentation
+	url = git@github.com:fafabedo/monkey-documentation.git
