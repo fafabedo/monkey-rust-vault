@@ -12,8 +12,8 @@ use crate::{
 // ── PostgREST response shapes ────────────────────────────────────────────────
 // PostgREST embeds many-to-one (FK on this table) as an object, and
 // one-to-many as an array. The chain here is:
-//   storage_buckets.provider_id → storage_providers.id
-//   storage_provider_credentials.provider_id → storage_providers.id
+//   storage_bucket.provider_id → storage_provider.id
+//   storage_provider_credential.provider_id → storage_provider.id
 
 #[derive(Deserialize)]
 struct BucketApiRow {
@@ -25,7 +25,7 @@ struct BucketApiRow {
     local_sub_path:    Option<String>,
     instance_id:       Option<Uuid>,
     space_id:          Option<Uuid>,
-    storage_providers: ProviderApiRow,
+    storage_provider: ProviderApiRow,
 }
 
 #[derive(Deserialize)]
@@ -33,7 +33,7 @@ struct ProviderApiRow {
     #[serde(rename = "type")]
     provider_type:                String,
     is_active:                    bool,
-    storage_provider_credentials: Option<CredsApiRow>,
+    storage_provider_credential: Option<CredsApiRow>,
 }
 
 #[derive(Deserialize)]
@@ -60,9 +60,9 @@ pub async fn get_bucket_with_credentials(
     let select = [
         "id,slug,s3_bucket_name,dropbox_root_path,drive_folder_id,",
         "local_sub_path,instance_id,space_id,",
-        "storage_providers!provider_id(",
+        "storage_provider!provider_id(",
         "type,is_active,",
-        "storage_provider_credentials(",
+        "storage_provider_credential(",
         "aws_access_key_enc,aws_secret_key_enc,aws_region,",
         "dropbox_access_token_enc,google_sa_json_enc,local_base_path))",
     ]
@@ -70,7 +70,7 @@ pub async fn get_bucket_with_credentials(
 
     let slug_filter = format!("eq.{slug}");
     let response = supabase
-        .get("storage_buckets")
+        .get("storage_bucket")
         .query(&[
             ("slug",      slug_filter.as_str()),
             ("is_active", "eq.true"),
@@ -102,11 +102,11 @@ pub async fn get_bucket_with_credentials(
         None    => return Ok(None),
     };
 
-    if !row.storage_providers.is_active {
+    if !row.storage_provider.is_active {
         return Ok(None);
     }
 
-    let creds = row.storage_providers.storage_provider_credentials;
+    let creds = row.storage_provider.storage_provider_credential;
 
     Ok(Some(BucketRow {
         id:                       row.id,
@@ -117,7 +117,7 @@ pub async fn get_bucket_with_credentials(
         local_sub_path:           row.local_sub_path,
         instance_id:              row.instance_id,
         space_id:                 row.space_id,
-        provider_type:            row.storage_providers.provider_type,
+        provider_type:            row.storage_provider.provider_type,
         aws_access_key_enc:       creds.as_ref().and_then(|c| c.aws_access_key_enc.clone()),
         aws_secret_key_enc:       creds.as_ref().and_then(|c| c.aws_secret_key_enc.clone()),
         aws_region:               creds.as_ref().and_then(|c| c.aws_region.clone()),
@@ -170,7 +170,7 @@ pub async fn insert_file_pending(
     };
 
     let response = supabase
-        .upsert("storage_files", "bucket_id,relative_path")
+        .upsert("storage_file", "bucket_id,relative_path")
         .json(&body)
         .send()
         .await?;
@@ -197,7 +197,7 @@ pub async fn path_exists(
     let path_filter   = format!("eq.{relative_path}");
 
     let response = supabase
-        .get("storage_files")
+        .get("storage_file")
         .query(&[
             ("bucket_id",     bucket_filter.as_str()),
             ("relative_path", path_filter.as_str()),
@@ -223,7 +223,7 @@ pub async fn mark_file_failed(
     message:  &str,
 ) -> VaultResult<()> {
     let response = supabase
-        .patch("storage_files")
+        .patch("storage_file")
         .query(&[("id", &format!("eq.{file_id}"))])
         .json(&serde_json::json!({
             "upload_status": "failed",
@@ -245,7 +245,7 @@ pub async fn mark_file_verified(
     result:   &UploadResult,
 ) -> VaultResult<()> {
     let response = supabase
-        .patch("storage_files")
+        .patch("storage_file")
         .query(&[("id", &format!("eq.{file_id}"))])
         .json(&serde_json::json!({
             "upload_status":   "verified",

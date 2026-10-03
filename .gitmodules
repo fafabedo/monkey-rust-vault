@@ -1,3 +1,3 @@
-[submodule "monkey-documentation"]
-	path = monkey-documentation
+[submodule "docs"]
+	path = docs
 	url = git@github.com:fafabedo/monkey-documentation.git
