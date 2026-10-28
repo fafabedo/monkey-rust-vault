@@ -1,3 +1,4 @@
+mod auth;
 mod config;
 mod crypto;
 mod db;
@@ -11,7 +12,7 @@ mod uri;
 
 use std::sync::Arc;
 
-use axum::{routing::post, Router};
+use axum::{middleware, routing::post, Router};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -41,9 +42,13 @@ async fn main() -> anyhow::Result<()> {
     let supabase = SupabaseClient::new(&config.supabase_url, &config.supabase_service_key);
     let state    = Arc::new(AppState { supabase, config });
 
-    let app = Router::new()
+    let protected = Router::new()
         .route("/upload", post(routes::upload::handle_upload))
+        .route_layer(middleware::from_fn(auth::require_auth));
+
+    let app = Router::new()
         .route("/health", axum::routing::get(|| async { "ok" }))
+        .merge(protected)
         .with_state(state)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive());

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Multipart, State},
+    extract::{Extension, Multipart, State},
     Json,
 };
 use bytes::Bytes;
@@ -7,14 +7,17 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
+    auth::AuthUser,
     error::{VaultError, VaultResult},
     models::UploadResponse,
     service::{upload_file, UploadParams},
+    supabase::SupabaseClient,
     AppState,
 };
 
 pub async fn handle_upload(
-    State(state): State<Arc<AppState>>,
+    State(state):  State<Arc<AppState>>,
+    auth:          Option<Extension<AuthUser>>,
     mut multipart: Multipart,
 ) -> VaultResult<Json<UploadResponse>> {
     let mut uri:         Option<String> = None;
@@ -59,6 +62,15 @@ pub async fn handle_upload(
     let uri       = uri.ok_or_else(|| VaultError::InvalidUri("Missing `uri` field".into()))?;
     let file_data = file_data.ok_or_else(|| VaultError::UploadFailed("Missing `file` field".into()))?;
 
+    let auth_user = auth.map(|Extension(u)| u);
+
+    // When a space is specified and the request is authenticated, enforce permission.
+    if let (Some(space), Some(user)) = (space_id, &auth_user) {
+        assert_space_access(&state.supabase, space, user).await?;
+    }
+
+    let uploaded_by = auth_user.as_ref().map(|u| u.user_id);
+
     let output = upload_file(
         &state.supabase,
         &state.config,
@@ -66,7 +78,7 @@ pub async fn handle_upload(
             uri,
             data: file_data,
             mime_type,
-            uploaded_by: None,
+            uploaded_by,
             instance_id,
             space_id,
         },
@@ -78,4 +90,15 @@ pub async fn handle_upload(
         uri:     output.uri,
         file_id: output.file_id,
     }))
+}
+
+/// Resolves space UUID and auth user to bigint IDs, then checks active owner/editor permission.
+async fn assert_space_access(
+    supabase:   &SupabaseClient,
+    space_uuid: Uuid,
+    user:       &AuthUser,
+) -> VaultResult<()> {
+    let space_bigint_id = supabase.get_space_bigint_id(space_uuid).await?;
+    let user_bigint_id  = supabase.get_user_bigint_id(user.user_id).await?;
+    supabase.check_space_permission(space_bigint_id, user_bigint_id).await
 }

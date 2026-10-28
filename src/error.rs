@@ -22,6 +22,10 @@ pub enum VaultError {
     Crypto(String),
     #[error("HTTP error: {0}")]
     Http(#[from] reqwest::Error),
+    #[error("Unauthorized")]
+    Unauthorized,
+    #[error("Forbidden")]
+    Forbidden,
 }
 
 impl IntoResponse for VaultError {
@@ -29,6 +33,8 @@ impl IntoResponse for VaultError {
         let (status, message) = match &self {
             VaultError::InvalidUri(_)      => (StatusCode::BAD_REQUEST, self.to_string()),
             VaultError::BucketNotFound(_)  => (StatusCode::NOT_FOUND, self.to_string()),
+            VaultError::Unauthorized       => (StatusCode::UNAUTHORIZED, self.to_string()),
+            VaultError::Forbidden          => (StatusCode::FORBIDDEN, self.to_string()),
             VaultError::VerificationFailed => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             _                              => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
         };
